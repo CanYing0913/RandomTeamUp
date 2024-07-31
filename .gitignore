@@ -1,3 +1,8 @@
 __pycache__
 .idea
 .vscode
+
+log
+record
+dist
+build

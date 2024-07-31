@@ -1,6 +1,9 @@
+import datetime
 import tkinter as tk
 import json
+import random
 import tkinter.font as font
+from tkinter import ttk
 from tkinter import messagebox
 from pathlib import Path
 
@@ -35,6 +38,7 @@ class App:
         self.container.pack(expand=True, fill='both')
         self.create_manager()
         self.create_options()
+        self.create_group()
 
     def create_manager(self):
         manager_frame = tk.Frame(self.container)
@@ -42,13 +46,13 @@ class App:
         self.container.manager = manager_frame
 
         listbar_frame = tk.Frame(manager_frame)
-        listbar_frame.pack(side=tk.TOP)
+        listbar_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         scrollbar = tk.Scrollbar(listbar_frame, orient=tk.VERTICAL)
         listbox = tk.Listbox(listbar_frame, height=10, width=20, yscrollcommand=scrollbar.set,
                              font=self.font, justify='center')
         scrollbar.config(command=listbox.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        listbox.pack(side=tk.LEFT, pady=10)
+        listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         listbox.bind('<Delete>', self.remove_member)
         listbox.bind('<BackSpace>', self.remove_member)
         manager_frame.member_list = listbox
@@ -61,6 +65,7 @@ class App:
         entry_label = tk.Label(entry_frame, text="Name:")
         entry_label.pack(side=tk.LEFT)
         entry = tk.Entry(entry_frame, width=10)
+        manager_frame.entry = entry
         entry.bind('<Return>', self.add_member)
         entry.pack(side=tk.LEFT, padx=5)
 
@@ -96,23 +101,43 @@ class App:
         # Set up the variable to store the value
         value_var = tk.IntVar()
         value_var.set(1)
+        self.container.option.group_var = value_var
 
         # Entry widget
         entry_var = tk.StringVar()
         entry_var.set(str(value_var.get()))
-        entry = tk.Entry(option_frame, textvariable=entry_var, width=2, justify='center')
-        entry.pack(pady=10)
+
+        entry_frame = tk.Frame(option_frame)
+        entry_frame.pack(padx=10, pady=10)
+        label = tk.Label(entry_frame, text="Members/Team:")
+        label.pack(side=tk.LEFT)
+        entry = tk.Entry(entry_frame, textvariable=entry_var, width=2, justify='center')
+        entry.pack(side=tk.LEFT, padx=5)
 
         # Scale (slider) widget
-        scale = tk.Scale(option_frame, from_=1, to=6, orient='horizontal',
+        scale = tk.Scale(option_frame, from_=1, to=6, width=15, length=150, orient='horizontal',
                          showvalue=False, variable=value_var, command=on_scale_change)
-        scale.pack(pady=10)
+        scale.pack(pady=5)
+
+        button = tk.Button(option_frame, text="TeamUP!", command=self.team_up)
+        button.pack(padx=5)
 
         # Set up tracing
         entry_var.trace_add("write", on_entry_change)
 
     def create_group(self):
-        pass
+        group_frame = tk.Frame(self.container)
+        group_frame.pack(side=tk.LEFT, fill='both', expand=True)
+        self.container.group = group_frame
+
+        title = tk.Label(group_frame, text="Groups Generated")
+        title.pack(side=tk.TOP)
+
+        notebook = ttk.Notebook(group_frame)
+        notebook.pack(fill=tk.BOTH, expand=True)
+        self.container.group.notebook = notebook
+
+
 
     def refresh_listbox(self):
         """Refresh the listbox to display the current population list."""
@@ -141,6 +166,34 @@ class App:
             self.refresh_listbox()
         except IndexError:
             messagebox.showwarning("Selection Error", "Please select a member to remove")
+
+    def team_up(self):
+        # Remove current assignments
+        for tab in self.container.group.notebook.tabs():
+            self.container.group.notebook.nametowidget(tab).destroy()
+
+        population = self.data['members']
+        group_size = self.container.option.group_var.get()
+
+        # Shuffle the list to randomize
+        random.shuffle(population)
+
+        # Split the list into groups
+        teams = [population[i:i + group_size] for i in range(0, len(population), group_size)]
+
+        teams_dict = {f'Team {idx:2d}': team for idx, team in enumerate(teams)}
+        with open(self.project.joinpath('record').joinpath(
+                datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.json'), 'w') as f:
+            json.dump(teams_dict, f, indent=4)
+
+        for idx, team in enumerate(teams):
+            cur_tab = ttk.Frame(self.container.group.notebook)
+            group_list = tk.Listbox(cur_tab, justify='center', width=15)
+            group_list.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+            for member in team:
+                group_list.insert(tk.END, member)
+
+            self.container.group.notebook.add(cur_tab, text=f'team {idx:2d}')
 
     def gui(self):
         try:
