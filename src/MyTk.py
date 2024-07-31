@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import traceback
 import logging
 from datetime import datetime
@@ -12,6 +13,8 @@ def find_project() -> Path:
     if not project_path.is_dir():
         project_path = Path.cwd()
     print(f"Project path: {project_path}")
+    with open(r'D:\CanYing\Code\RandomTeamUp\temp.txt', 'w') as f:
+        f.write(f"Project path: {str(project_path)}")
     return project_path
 
 
@@ -46,3 +49,57 @@ class MyTk(tk.Tk):
         trace = ''.join(traceback.format_exception(exc, val, tb))
         self.logger.error(f"Exception: \n{trace}")
         super().report_callback_exception(exc, val, tb)
+
+
+class ScrollableNotebook(ttk.Notebook):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+        # Create the canvas and scrollbar
+        self.canvas = tk.Canvas(self, height=30)
+        self.canvas.pack(side=tk.TOP, fill=tk.X, expand=False)
+
+        self.tab_frame = ttk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.tab_frame, anchor="nw")
+
+        self.scrollbar = ttk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
+        self.canvas.configure(xscrollcommand=self.scrollbar.set)
+        self.scrollbar.pack(side=tk.TOP, fill=tk.X)
+
+        # Pack the notebook itself below the scrollbar
+        self.pack(expand=True, fill=tk.BOTH)
+
+        # Update the scroll region
+        self.tab_frame.bind("<Configure>", self._on_frame_configure)
+
+        # Bind scroll event
+        self.bind_all("<MouseWheel>", self._on_mouse_wheel)
+
+        # To keep track of tab headers
+        self.tab_headers = {}
+
+    def _on_frame_configure(self, event):
+        # Set the scroll region for the canvas
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _on_mouse_wheel(self, event):
+        # Scroll tabs horizontally with mouse wheel
+        self.canvas.xview_scroll(int(-1*(event.delta/120)), "units")
+
+    def add(self, child, **kw):
+        """Add a new tab to the notebook and a corresponding tab label."""
+        super().add(child, **kw)
+
+        # Add the tab to the canvas frame
+        tab_id = self.index("end") - 1  # Get index of the new tab
+        tab_button = ttk.Label(self.tab_frame, text=kw['text'], relief="raised")
+        tab_button.pack(side=tk.LEFT, padx=2)
+        tab_button.bind("<Button-1>", lambda e, index=tab_id: self.select(index))
+        self.tab_headers[tab_id] = tab_button
+
+    def remove_all_tabs(self):
+        """Remove all tabs and their corresponding labels."""
+        for tab_id in self.tab_headers:
+            self.forget(tab_id)  # Remove from notebook
+            self.tab_headers[tab_id].destroy()  # Destroy the header
+        self.tab_headers.clear()  # Clear the tab headers dictionary

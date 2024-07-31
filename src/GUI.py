@@ -7,7 +7,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from pathlib import Path
 
-from .MyTk import MyTk, find_project, setup_logger
+from .MyTk import MyTk, ScrollableNotebook, find_project, setup_logger
 
 
 class App:
@@ -30,6 +30,8 @@ class App:
         self.font = font.Font(family="Helvetica", size=12, weight="bold")
 
         # Data
+        datapath = self.project.joinpath('data').joinpath('database.json')
+        assert datapath.exists() and datapath.is_file(), "Database file not found."
         with open(self.project.joinpath('data').joinpath('database.json'), 'r') as f:
             self.data = json.load(f)
 
@@ -133,7 +135,7 @@ class App:
         title = tk.Label(group_frame, text="Groups Generated")
         title.pack(side=tk.TOP)
 
-        notebook = ttk.Notebook(group_frame)
+        notebook = ScrollableNotebook(group_frame)
         notebook.pack(fill=tk.BOTH, expand=True)
         self.container.group.notebook = notebook
 
@@ -169,8 +171,9 @@ class App:
 
     def team_up(self):
         # Remove current assignments
-        for tab in self.container.group.notebook.tabs():
-            self.container.group.notebook.nametowidget(tab).destroy()
+        # for tab in self.container.group.notebook.tabs():
+        #     self.container.group.notebook.nametowidget(tab).destroy()
+        self.container.group.notebook.remove_all_tabs()
 
         population = self.data['members']
         group_size = self.container.option.group_var.get()

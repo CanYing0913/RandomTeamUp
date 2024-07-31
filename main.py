@@ -3,7 +3,11 @@ from src.GUI import App
 
 def main():
     app = App()
-    app.gui()
+    try:
+        app.gui()
+    except Exception as e:
+        app.logger.error(f"Exception: {e}")
+        pass
 
 
 if __name__ == '__main__':
