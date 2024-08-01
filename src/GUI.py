@@ -15,6 +15,7 @@ class App:
 
     def __init__(self):
         self.project: Path = find_project()
+        self.project.joinpath('record').mkdir(exist_ok=True)
         self.logger = setup_logger(self.project)
         self.root = MyTk(self.logger)
         self.root.title("App")
@@ -139,8 +140,6 @@ class App:
         notebook.pack(fill=tk.BOTH, expand=True)
         self.container.group.notebook = notebook
 
-
-
     def refresh_listbox(self):
         """Refresh the listbox to display the current population list."""
         self.container.manager.member_list.delete(0, tk.END)
@@ -185,6 +184,7 @@ class App:
         teams = [population[i:i + group_size] for i in range(0, len(population), group_size)]
 
         teams_dict = {f'Team {idx:2d}': team for idx, team in enumerate(teams)}
+
         with open(self.project.joinpath('record').joinpath(
                 datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.json'), 'w') as f:
             json.dump(teams_dict, f, indent=4)

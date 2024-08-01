@@ -1,4 +1,5 @@
 import tkinter as tk
+import sys
 from tkinter import ttk
 import traceback
 import logging
@@ -9,12 +10,11 @@ from typing import Optional
 
 
 def find_project() -> Path:
-    project_path = Path(__file__).parent.parent
-    if not project_path.is_dir():
+    if hasattr(sys, 'frozen'):
         project_path = Path.cwd()
+    else:
+        project_path = Path(__file__).parent.parent
     print(f"Project path: {project_path}")
-    with open(r'D:\CanYing\Code\RandomTeamUp\temp.txt', 'w') as f:
-        f.write(f"Project path: {str(project_path)}")
     return project_path
 
 
