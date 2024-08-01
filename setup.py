@@ -22,12 +22,10 @@ executables = [
     Executable(
         "main.py",
         copyright="Copyright (C) 2024 CanYing0913.github.io",
-        # base=base,
-        base="Console",
+        base=base,
+        # base="Console",
         icon="icon.ico",
         target_name="TeamUP180",
-        shortcut_name="TeamUP180",
-        shortcut_dir="Program",
     )
 ]
 
